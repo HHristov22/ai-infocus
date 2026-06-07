@@ -2,8 +2,11 @@ import React from 'react';
 import { Container, Typography, Box, TextField, Button, Paper } from '@mui/material';
 import Layout from '../../components/layout/Layout';
 import emailjs from "@emailjs/browser";
+import { getText } from '../../utils/i18n';
 
-export default function Contact({ darkMode, toggleDarkMode }) {
+export default function Contact({ darkMode, toggleDarkMode, locale, toggleLocale }) {
+  const text = getText(locale);
+
   const handleSubmit = (event) => {
     event.preventDefault();
 
@@ -23,20 +26,20 @@ export default function Contact({ darkMode, toggleDarkMode }) {
       .then(
         (response) => {
           console.log("SUCCESS!", response.status, response.text);
-          alert("Message sent successfully!");
+          alert(text.contact.success);
         },
         (err) => {
           console.error("FAILED...", err);
-          alert("Message failed to send.");
+          alert(text.contact.failure);
         }
       );
   };
 
   return (
-    <Layout darkMode={darkMode} toggleDarkMode={toggleDarkMode}>
+    <Layout darkMode={darkMode} toggleDarkMode={toggleDarkMode} locale={locale} toggleLocale={toggleLocale}>
       <Container maxWidth="md" sx={{ my: 4 }}>
         <Typography variant="h4" component="h1" sx={{ mb: 4 }}>
-        Contact Me
+        {text.contact.title}
         </Typography>
         <Paper sx={{ p: 4 }}>
           <Box component="form" onSubmit={handleSubmit} noValidate>
@@ -45,7 +48,7 @@ export default function Contact({ darkMode, toggleDarkMode }) {
               required
               fullWidth
               id="name"
-              label="Name"
+              label={text.contact.name}
               name="name"
               autoComplete="name"
               autoFocus
@@ -55,7 +58,7 @@ export default function Contact({ darkMode, toggleDarkMode }) {
               required
               fullWidth
               id="email"
-              label="Email Address"
+              label={text.contact.email}
               name="email"
               autoComplete="email"
             />
@@ -64,7 +67,7 @@ export default function Contact({ darkMode, toggleDarkMode }) {
               required
               fullWidth
               name="message"
-              label="Message"
+              label={text.contact.message}
               id="message"
               multiline
               rows={4}
@@ -75,7 +78,7 @@ export default function Contact({ darkMode, toggleDarkMode }) {
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
             >
-              Send Message
+              {text.contact.submit}
             </Button>
           </Box>
         </Paper>

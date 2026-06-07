@@ -1,8 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Box, Typography, Container } from '@mui/material';
+import { getText } from '../../utils/i18n';
 
-const Hero = () => {
+const Hero = ({ locale }) => {
+  const text = getText(locale);
+
   const textVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -39,11 +42,11 @@ const Hero = () => {
             component="h1" 
             sx={{ 
               mb: 4,
-              fontFamily: 'Righteous',
+              fontFamily: 'Bitter',
               fontSize: { xs: '2rem', md: '3.75rem' }
             }}
           >
-            Welcome to AI-INFOCUS
+            {text.hero.title}
           </Typography>
           
           <Typography 
@@ -55,7 +58,7 @@ const Hero = () => {
               fontSize: { xs: '1.2rem', md: '1.5rem' }
             }}
           >
-            Your Gateway to the Latest AI News and Innovations
+            {text.hero.subtitle}
           </Typography>
           
           <Typography 
@@ -67,8 +70,7 @@ const Hero = () => {
               fontSize: { xs: '1rem', md: '1.1rem' }
             }}
           >
-            Stay informed about the rapidly evolving world of artificial intelligence. 
-            We bring you curated news, insights, and analysis from the forefront of AI technology.
+            {text.hero.description}
           </Typography>
         </motion.div>
       </Container>

@@ -11,22 +11,22 @@ const theme = createTheme({
   },
   typography: {
     h1: {
-      fontFamily: 'Righteous, sans-serif',
+      fontFamily: 'Bitter, serif',
     },
     h2: {
-      fontFamily: 'Righteous, sans-serif',
+      fontFamily: 'Bitter, serif',
     },
     h3: {
-      fontFamily: 'Righteous, sans-serif',
+      fontFamily: 'Bitter, serif',
     },
     h4: {
-      fontFamily: 'Righteous, sans-serif',
+      fontFamily: 'Bitter, serif',
     },
     h5: {
-      fontFamily: 'Righteous, sans-serif',
+      fontFamily: 'Bitter, serif',
     },
     h6: {
-      fontFamily: 'Righteous, sans-serif',
+      fontFamily: 'Bitter, serif',
     },
   },
   components: {

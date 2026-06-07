@@ -16,28 +16,27 @@ import {
   Article as ArticleIcon,
 } from '@mui/icons-material';
 import Layout from '../../components/layout/Layout';
+import { getText } from '../../utils/i18n';
 
-export default function About({ darkMode, toggleDarkMode }) {
+export default function About({ darkMode, toggleDarkMode, locale, toggleLocale }) {
+  const text = getText(locale);
   const featureItems = [
     {
       icon: <CodeIcon color="primary" />,
-      primary: "Cutting-Edge Insights",
-      secondary: "Deep dive into the most advanced AI technologies and innovations.",
+      ...text.about.items[0],
     },
     {
       icon: <AutoGraphIcon color="secondary" />,
-      primary: "Comprehensive Analysis",
-      secondary: "Bridging complex technical concepts with clear, accessible reporting.",
+      ...text.about.items[1],
     },
     {
       icon: <ArticleIcon color="success" />,
-      primary: "Curated Content",
-      secondary: "Carefully selected news and research from the most reliable sources.",
+      ...text.about.items[2],
     },
   ];
 
   return (
-    <Layout darkMode={darkMode} toggleDarkMode={toggleDarkMode}>
+    <Layout darkMode={darkMode} toggleDarkMode={toggleDarkMode} locale={locale} toggleLocale={toggleLocale}>
       <Container maxWidth="md" sx={{ my: 4 }}>
         <Paper
           elevation={3}
@@ -60,7 +59,7 @@ export default function About({ darkMode, toggleDarkMode }) {
               color: (theme) => theme.palette.text.primary,
             }}
           >
-            Discover AI-INFOCUS
+            {text.about.title}
           </Typography>
 
           <Typography
@@ -72,9 +71,7 @@ export default function About({ darkMode, toggleDarkMode }) {
               textAlign: 'justify',
             }}
           >
-            AI-INFOCUS is your go-to platform for staying updated on the latest breakthroughs
-            in the AI world. Its mission is to bridge the gap between complex
-            AI advancements and clear, comprehensive reporting.
+            {text.about.intro}
           </Typography>
 
           <List
@@ -127,8 +124,7 @@ export default function About({ darkMode, toggleDarkMode }) {
               textAlign: 'justify',
             }}
           >
-            Created with passion and dedication, AI-INFOCUS is an initiative
-            striving to make the world of AI accessible and engaging for everyone.
+            {text.about.outro}
           </Typography>
         </Paper>
       </Container>

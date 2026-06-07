@@ -23,12 +23,13 @@ import {
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getText } from '../../utils/i18n';
 
-const navItems = [
-  { title: 'News', path: '/news', icon: <Newspaper /> },
-  { title: 'Contact', path: '/contact', icon: <ContactMail /> },
-  { title: 'Features', path: '/features', icon: <Star/> },
-  { title: 'About', path: '/about', icon: <Info /> }
+const navItems = (text) => [
+  { title: text.nav.news, path: '/news', icon: <Newspaper /> },
+  { title: text.nav.contact, path: '/contact', icon: <ContactMail /> },
+  { title: text.nav.features, path: '/features', icon: <Star/> },
+  { title: text.nav.about, path: '/about', icon: <Info /> }
 ];
 
 const menuIconVariants = {
@@ -40,8 +41,28 @@ const menuIconVariants = {
   }
 };
 
-export default function Header({ darkMode, toggleDarkMode }) {
+export default function Header({ darkMode, toggleDarkMode, locale, toggleLocale }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const text = getText(locale);
+  const languageSwitch = locale === 'bg'
+    ? { shortLabel: 'БГ', ariaLabel: 'Превключи на английски' }
+    : { shortLabel: 'EN', ariaLabel: 'Switch to Bulgarian' };
+  const headerIconButtonSx = {
+    width: 44,
+    height: 44,
+    borderRadius: '12px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: '1px solid rgba(255, 255, 255, 0.22)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    transition: 'background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease',
+    '&:hover': {
+      backgroundColor: 'rgba(255, 255, 255, 0.16)',
+      borderColor: 'rgba(255, 255, 255, 0.4)',
+      transform: 'translateY(-1px)',
+    }
+  };
 
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
@@ -54,7 +75,7 @@ export default function Header({ darkMode, toggleDarkMode }) {
       onClick={toggleDrawer}
     >
       <List>
-        {navItems.map((item) => (
+        {navItems(text).map((item) => (
           <Link href={item.path} key={item.path} passHref>
             <ListItem 
               button 
@@ -77,7 +98,7 @@ export default function Header({ darkMode, toggleDarkMode }) {
                 primary={item.title} 
                 primaryTypographyProps={{
                   sx: { 
-                    fontFamily: 'Righteous',
+                    fontFamily: 'Bitter',
                     fontSize: '1.1rem'
                   }
                 }}
@@ -119,7 +140,7 @@ export default function Header({ darkMode, toggleDarkMode }) {
             <Typography
               variant="h6"
               sx={{
-                fontFamily: 'Righteous',
+                fontFamily: 'Bitter',
                 fontSize: { xs: '28px', md: '42px' },
                 color: 'white',
                 textDecoration: 'none',
@@ -131,13 +152,35 @@ export default function Header({ darkMode, toggleDarkMode }) {
           </Link>
         </Box>
 
-        <IconButton 
-          color="inherit" 
-          onClick={toggleDarkMode}
-          sx={{ ml: 2 }}
-        >
-          {darkMode ? <LightMode /> : <DarkMode />}
-        </IconButton>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+          <IconButton
+            onClick={toggleLocale}
+            color="inherit"
+            aria-label={languageSwitch.ariaLabel}
+            sx={{
+              ...headerIconButtonSx,
+              fontFamily: 'Bitter',
+              fontSize: '0.95rem',
+              fontWeight: 700,
+            }}
+          >
+            {languageSwitch.shortLabel}
+          </IconButton>
+
+          <IconButton 
+            color="inherit"
+            onClick={toggleDarkMode}
+            aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            sx={{
+              ...headerIconButtonSx,
+              '& .MuiSvgIcon-root': {
+                fontSize: 22,
+              }
+            }}
+          >
+            {darkMode ? <LightMode /> : <DarkMode />}
+          </IconButton>
+        </Box>
 
         <AnimatePresence>
           <Drawer

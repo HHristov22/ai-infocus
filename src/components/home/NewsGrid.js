@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import allTags from '../../../scripts/news_tags.json';
 import { 
@@ -13,17 +13,29 @@ import {
   Menu, 
   MenuItem,
   Checkbox,
-  FormControlLabel
+  FormControlLabel,
+  FormControl,
+  Select
 } from '@mui/material';
 import { 
   ArrowForward, 
   FilterList as FilterIcon, 
-  Close as CloseIcon 
+  Close as CloseIcon,
+  ArrowUpward,
+  ArrowDownward,
+  AutoAwesome
 } from '@mui/icons-material';
 import Link from 'next/link';
+import { formatDisplayDate, getText } from '../../utils/i18n';
 
-export default function NewsGrid({ articles, error }) {
+export default function NewsGrid({ articles, error, locale }) {
   const router = useRouter();
+  const text = getText(locale);
+  const sortOptions = [
+    { value: 'fresh', label: text.newsGrid.fresh },
+    { value: 'archive', label: text.newsGrid.archive },
+    { value: 'trending', label: text.newsGrid.trending },
+  ];
 
   const getTagLabel = (tag) => {
     if (!tag || typeof tag !== 'object') {
@@ -52,6 +64,7 @@ export default function NewsGrid({ articles, error }) {
   const [selectedTags, setSelectedTags] = useState([]);
   const [filterMode, setFilterMode] = useState('any');
   const [filteredArticles, setFilteredArticles] = useState(articles);
+  const [sortMode, setSortMode] = useState('fresh');
   
   // Anchor for dropdown menu
   const [anchorEl, setAnchorEl] = useState(null);
@@ -108,6 +121,34 @@ export default function NewsGrid({ articles, error }) {
     setFilterMode(prev => prev === 'any' ? 'all' : 'any');
   };
 
+  const sortedArticles = useMemo(() => {
+    const list = [...filteredArticles];
+
+    if (sortMode === 'archive') {
+      return list.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    }
+
+    if (sortMode === 'trending') {
+      return list.sort((a, b) => {
+        const viewDiff = (Number(b.views) || 0) - (Number(a.views) || 0);
+        if (viewDiff !== 0) {
+          return viewDiff;
+        }
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      });
+    }
+
+    return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [filteredArticles, sortMode]);
+
+  const currentSortOption = sortOptions.find((option) => option.value === sortMode) || sortOptions[0];
+
+  const SortModeIcon = sortMode === 'trending'
+    ? AutoAwesome
+    : sortMode === 'archive'
+      ? ArrowDownward
+      : ArrowUpward;
+
   // Error handling
   if (error) {
     return (
@@ -127,36 +168,92 @@ export default function NewsGrid({ articles, error }) {
       {isNewsPage && (
         <Box sx={{ 
           display: 'flex', 
+          justifyContent: 'space-between',
           alignItems: 'center', 
           mb: 2,
-          flexWrap: 'wrap'
+          flexWrap: 'wrap',
+          gap: 1,
         }}>
-          <IconButton onClick={handleFilterClick} sx={{ mr: 2 }}>
-            <FilterIcon />
-          </IconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+            <IconButton onClick={handleFilterClick} sx={{ mr: 2 }}>
+              <FilterIcon />
+            </IconButton>
 
-          {selectedTags.length > 0 && (
-            <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
-              {selectedTags.map(tag => (
-                <Chip
-                  key={tag}
-                  label={tag}
-                  onDelete={() => handleRemoveTag(tag)}
-                  deleteIcon={<CloseIcon />}
-                  sx={{ m: 0.5 }}
-                />
-              ))}
-            </Box>
-          )}
+            {selectedTags.length > 0 && (
+              <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+                {selectedTags.map(tag => (
+                  <Chip
+                    key={tag}
+                    label={tag}
+                    onDelete={() => handleRemoveTag(tag)}
+                    deleteIcon={<CloseIcon />}
+                    sx={{ m: 0.5 }}
+                  />
+                ))}
+              </Box>
+            )}
 
-          {selectedTags.length > 1 && (
-            <Chip 
-              label={filterMode === 'any' ? 'Combine' : 'Any Tag'} 
-              onClick={handleCombineToggle}
-              color={filterMode === 'all' ? 'primary' : 'default'}
-              sx={{ ml: 1 }}
-            />
-          )}
+            {selectedTags.length > 1 && (
+              <Chip 
+                label={filterMode === 'any' ? text.newsGrid.combine : text.newsGrid.anyTag} 
+                onClick={handleCombineToggle}
+                color={filterMode === 'all' ? 'primary' : 'default'}
+                sx={{ ml: 1 }}
+              />
+            )}
+          </Box>
+
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <FormControl size="small" sx={{ width: { xs: 170, sm: 185 } }}>
+              <Select
+                value={sortMode}
+                onChange={(event) => setSortMode(event.target.value)}
+                variant="standard"
+                disableUnderline
+                renderValue={() => (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+                    <SortModeIcon sx={{ fontSize: 18, color: '#106EBE' }} />
+                    <Typography
+                      sx={{
+                        fontSize: '0.95rem',
+                        fontWeight: 700,
+                        color: '#106EBE',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        maxWidth: '130px',
+                      }}
+                    >
+                      {currentSortOption.label}
+                    </Typography>
+                  </Box>
+                )}
+                sx={{
+                  px: 0.25,
+                  '& .MuiSelect-icon': {
+                    color: '#106EBE',
+                  },
+                }}
+              >
+                {sortOptions.map((option) => {
+                  const OptionIcon = option.value === 'trending'
+                    ? AutoAwesome
+                    : option.value === 'archive'
+                      ? ArrowDownward
+                      : ArrowUpward;
+
+                  return (
+                    <MenuItem key={option.value} value={option.value}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <OptionIcon sx={{ fontSize: 18 }} />
+                        <span>{option.label}</span>
+                      </Box>
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+            </FormControl>
+          </Box>
         </Box>
       )}
 
@@ -200,8 +297,8 @@ export default function NewsGrid({ articles, error }) {
 
       {/* Articles Grid */}
       <Grid container spacing={3}>
-        {filteredArticles.length > 0 ? (
-          filteredArticles.map((article) => (
+        {sortedArticles.length > 0 ? (
+          sortedArticles.map((article) => (
             <Grid item xs={12} sm={6} md={4} key={article.slug}>
               <Card
                 sx={{
@@ -229,10 +326,10 @@ export default function NewsGrid({ articles, error }) {
                       mb: 1,
                     }}
                   >
-                    {article.title}
+                    {locale === 'bg' && article.titleBg ? article.titleBg : article.title}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
-                    {article.formattedDate}
+                    {formatDisplayDate(article.date, locale)}
                   </Typography>
                   {/* Tags section */}
                   {article.tags && article.tags.length > 0 && (
@@ -270,7 +367,7 @@ export default function NewsGrid({ articles, error }) {
                       opacity: 0.7,
                     }}
                   >
-                    {article.content}
+                    {locale === 'bg' && article.contentBg ? article.contentBg : article.content}
                   </Typography>
                 </CardContent>
                 <CardActions sx={{ justifyContent: 'flex-end' }}>
@@ -287,8 +384,8 @@ export default function NewsGrid({ articles, error }) {
           <Grid item xs={12}>
             <Typography variant="body1" color="text.secondary" align="center">
               {hasActiveFilters
-                ? 'Няма резултати за избраните филтри. Опитай с по-малко тагове или изчисти филтрите.'
-                : 'В момента няма налични новини.'}
+                ? text.newsGrid.noFilteredArticles
+                : text.newsGrid.noArticles}
             </Typography>
           </Grid>
         )}

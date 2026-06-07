@@ -15,28 +15,27 @@ import {
   Recommend as RecommendIcon 
 } from '@mui/icons-material';
 import Layout from '../../components/layout/Layout';
+import { getText } from '../../utils/i18n';
 
-export default function FutureEnhancements({ darkMode, toggleDarkMode }) {
+export default function FutureEnhancements({ darkMode, toggleDarkMode, locale, toggleLocale }) {
+  const text = getText(locale);
   const enhancementItems = [
     {
       icon: <RocketLaunchIcon color="primary" />,
-      primary: "Expand News Sources for Broader Coverage",
-      secondary: "Incorporate additional reliable sources to provide a more comprehensive view of the AI landscape.",
+      ...text.features.items[0],
     },
     {
       icon: <RecommendIcon color="secondary" />,
-      primary: "Introduce User Preferences and Tailored Recommendations",
-      secondary: "Enable users to customize their news feed based on topics of interest, creating a more personalized experience.",
+      ...text.features.items[1],
     },
     {
       icon: <AutoGraphIcon color="success" />,
-      primary: "Improve News Visualization",
-      secondary: "Enhance the presentation of news articles with better image integration, external links, and an intuitive layout.",
+      ...text.features.items[2],
     }
   ];
 
   return (
-    <Layout darkMode={darkMode} toggleDarkMode={toggleDarkMode}>
+    <Layout darkMode={darkMode} toggleDarkMode={toggleDarkMode} locale={locale} toggleLocale={toggleLocale}>
       <Container maxWidth="md" sx={{ my: 4 }}>
         <Paper 
           elevation={3} 
@@ -59,7 +58,7 @@ export default function FutureEnhancements({ darkMode, toggleDarkMode }) {
               color: (theme) => theme.palette.text.primary
             }}
           >
-            Future Enhancements
+            {text.features.title}
           </Typography>
 
           <Typography 
@@ -71,7 +70,7 @@ export default function FutureEnhancements({ darkMode, toggleDarkMode }) {
               textAlign: 'justify' 
             }}
           >
-            AI-INFOCUS is committed to continuous improvement, and several exciting enhancements are planned for the future. The roadmap focuses on creating a more dynamic, personalized, and comprehensive AI news experience.
+            {text.features.intro}
           </Typography>
 
           <List 

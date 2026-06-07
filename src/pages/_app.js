@@ -8,10 +8,16 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export default function MyApp({ Component, pageProps }) {
   const [darkMode, setDarkMode] = useState(false);
+  const [locale, setLocale] = useState('bg');
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('darkMode') === 'true';
     setDarkMode(savedTheme);
+
+    const savedLocale = localStorage.getItem('locale');
+    if (savedLocale === 'bg' || savedLocale === 'en') {
+      setLocale(savedLocale);
+    }
   }, []);
 
   const toggleDarkMode = () => {
@@ -21,9 +27,20 @@ export default function MyApp({ Component, pageProps }) {
     });
   };
 
+  const toggleLocale = () => {
+    setLocale((prev) => {
+      const next = prev === 'bg' ? 'en' : 'bg';
+      localStorage.setItem('locale', next);
+      return next;
+    });
+  };
+
   const theme = createTheme({
     palette: {
       mode: darkMode ? 'dark' : 'light',
+    },
+    typography: {
+      fontFamily: 'Bitter, serif',
     },
   });
 
@@ -34,15 +51,23 @@ export default function MyApp({ Component, pageProps }) {
         <style>
           {`
             @font-face {
-              font-family: 'Righteous';
-              src: url('/assets/fonts/Righteous.ttf') format('truetype');
+              font-family: 'Bitter';
+              src: url('/assets/fonts/Bitter-VariableFont_wght.ttf') format('truetype');
+              font-weight: 100 900;
+              font-style: normal;
             }
           `}
         </style>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>AI-INFOCUS</title>
       </Head>
-      <Component {...pageProps} darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+      <Component
+        {...pageProps}
+        darkMode={darkMode}
+        toggleDarkMode={toggleDarkMode}
+        locale={locale}
+        toggleLocale={toggleLocale}
+      />
       <Analytics />
       <SpeedInsights />
     </ThemeProvider>

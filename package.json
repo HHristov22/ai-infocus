@@ -10,8 +10,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "ingest:db": "python scripts/main.py --storage-mode database --times 1",
-    "import:markdown-to-db": "python scripts/import_markdown_to_db.py"
+    "ingest:db": "python scripts/main.py --times 1"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
@@ -22,7 +21,6 @@
     "@vercel/analytics": "^1.4.1",
     "@vercel/speed-insights": "^1.1.0",
     "framer-motion": "^12.0.0",
-    "gray-matter": "^4.0.3",
     "next": "^16.2.7",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",

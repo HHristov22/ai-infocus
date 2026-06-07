@@ -1,14 +1,12 @@
 @font-face {
-  font-family: 'Righteous';
-  src: url('/assets/fonts/Righteous.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
+  font-family: 'Bitter';
+  src: url('/assets/fonts/Bitter-VariableFont_wght.ttf') format('truetype');
 }
 
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Righteous', sans-serif;
+  font-family: 'Bitter', serif;
 }
 
 a {

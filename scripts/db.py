@@ -25,16 +25,22 @@ def init_db():
                     id SERIAL PRIMARY KEY,
                     slug TEXT NOT NULL UNIQUE,
                     title TEXT NOT NULL,
+                    title_bg TEXT,
                     source TEXT,
                     published_at TIMESTAMPTZ,
                     link TEXT UNIQUE,
                     tags JSONB DEFAULT '{}'::jsonb,
                     content TEXT NOT NULL,
+                    content_bg TEXT,
+                    view_count BIGINT NOT NULL DEFAULT 0,
                     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
                 );
                 """
             )
+            cursor.execute("ALTER TABLE articles ADD COLUMN IF NOT EXISTS title_bg TEXT;")
+            cursor.execute("ALTER TABLE articles ADD COLUMN IF NOT EXISTS content_bg TEXT;")
+            cursor.execute("ALTER TABLE articles ADD COLUMN IF NOT EXISTS view_count BIGINT NOT NULL DEFAULT 0;")
     return True
 
 
@@ -54,15 +60,17 @@ def upsert_article(news, slug):
     return upsert_article_payload(
         slug=slug,
         title=news.title,
+        title_bg=getattr(news, 'title_bg', None),
         source=news.source,
         published_at=news.published,
         link=news.link,
         tags=tags,
         content=news.content,
+        content_bg=getattr(news, 'content_bg', None),
     )
 
 
-def upsert_article_payload(slug, title, source, published_at, link, tags, content):
+def upsert_article_payload(slug, title, title_bg, source, published_at, link, tags, content, content_bg):
     connection_string = _get_connection_string()
     if not connection_string:
         return False
@@ -71,26 +79,30 @@ def upsert_article_payload(slug, title, source, published_at, link, tags, conten
         with conn.cursor() as cursor:
             cursor.execute(
                 """
-                INSERT INTO articles (slug, title, source, published_at, link, tags, content)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO articles (slug, title, title_bg, source, published_at, link, tags, content, content_bg)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (slug)
                 DO UPDATE SET
                     title = EXCLUDED.title,
+                    title_bg = EXCLUDED.title_bg,
                     source = EXCLUDED.source,
                     published_at = EXCLUDED.published_at,
                     link = EXCLUDED.link,
                     tags = EXCLUDED.tags,
                     content = EXCLUDED.content,
+                    content_bg = EXCLUDED.content_bg,
                     updated_at = NOW();
                 """,
                 (
                     slug,
                     title,
+                    title_bg,
                     source,
                     published_at,
                     link,
                     Json(tags if isinstance(tags, dict) else {}),
                     content,
+                    content_bg,
                 ),
             )
     return True

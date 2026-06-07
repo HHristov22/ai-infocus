@@ -1,23 +1,31 @@
 {
     "Amazon Science": "https://www.amazon.science/index.rss",
+    "OpenAI News": "https://openai.com/news/rss.xml",
     "Machine Learning Mastery": "https://machinelearningmastery.com/blog/feed/",
     "MarkTechPost": "https://marktechpost.com/feed/",
     "Berkeley AI Research (BAIR)": "https://bair.berkeley.edu/blog/feed.xml",
-    "DeepMind": "https://deepmind.com/blog/feed/basic",
+    "DeepMind": "https://deepmind.google/blog/rss.xml",
+    "Google Research": "https://research.google/blog/rss/",
+    "fast.ai Blog": "https://www.fast.ai/index.xml",
+    "PyTorch Blog": "https://pytorch.org/blog/feed/",
 
     "BBC Technology": "http://feeds.bbci.co.uk/news/technology/rss.xml",
     "The Verge AI": "https://www.theverge.com/rss/index.xml",
     "MIT Technology Review AI": "https://www.technologyreview.com/feed/",
-    "Wired AI": "https://www.wired.com/feed/category/ai/latest/rss",
+    "Wired AI": "https://www.wired.com/feed/tag/ai/latest/rss",
+    "AI News": "https://www.artificialintelligence-news.com/feed/",
 
     "AWS Machine Learning Blog": "https://aws.amazon.com/blogs/machine-learning/feed",
     "Towards Data Science": "https://towardsdatascience.com/feed",
-    "Analytics India Magazine": "https://analyticsindiamag.com/feed/",
-    "NVIDIA Blog - AI": "https://blogs.nvidia.com/blog/category/ai/feed/",
+    "NVIDIA Blog": "https://blogs.nvidia.com/feed/",
     "TechCrunch AI": "https://techcrunch.com/tag/artificial-intelligence/feed/",
     "Singularity Hub AI": "https://singularityhub.com/category/artificial-intelligence/feed/",
     "Science Daily AI": "https://www.sciencedaily.com/rss/computers_math/artificial_intelligence.xml",
+    "Databricks Blog": "https://www.databricks.com/blog/feed.xml",
+    "Together AI Blog": "https://www.together.ai/blog/rss.xml",
 
     "KDnuggets": "https://www.kdnuggets.com/feed",
-    "ArXiv Machine Learning": "https://arxiv.org/rss/cs.LG"
+    "Hugging Face Blog": "https://huggingface.co/blog/feed.xml",
+    "Google Blog AI": "https://blog.google/technology/ai/rss/",
+    "Microsoft AI Blog": "https://blogs.microsoft.com/ai/feed/"
 }

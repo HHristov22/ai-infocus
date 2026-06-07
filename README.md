@@ -22,8 +22,6 @@ It collects articles from RSS feeds, enriches and tags them with AI, stores them
     - No noisy content commits for every ingestion run.
     - Better scalability for filtering and querying.
 
-Markdown files under `news/` are optional fallback and can be imported into DB.
-
 ### 3) Delivery Layer (Next.js)
 - Location: `src/pages/`
 - Responsibilities:
@@ -43,13 +41,6 @@ Markdown files under `news/` are optional fallback and can be imported into DB.
 2. Pipeline writes new content into Postgres.
 3. Vercel reads from Postgres at runtime.
 
-## Storage Modes
-
-`NEWS_STORAGE_MODE` controls where ingestion writes content:
-- `database` (default): DB only.
-- `file`: Markdown only.
-- `both`: DB + Markdown.
-
 ## Local Development
 
 ### Prerequisites
@@ -68,11 +59,8 @@ Markdown files under `news/` are optional fallback and can be imported into DB.
     - `GEMINI_API_KEY=...`
     - `POSTGRES_URL=...`
 5. Run ingestion manually:
-    - DB mode: `python scripts/main.py --storage-mode database --times 1`
+    - `python scripts/main.py --times 1`
     - or `npm run ingest:db`
-6. Import existing markdown files into DB (optional):
-    - `python scripts/import_markdown_to_db.py`
-    - or `npm run import:markdown-to-db`
 6. Start frontend:
     - `npm run dev`
 

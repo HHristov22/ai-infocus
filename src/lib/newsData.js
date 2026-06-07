@@ -1,7 +1,3 @@
-import fs from 'fs';
-import path from 'path';
-import matter from 'gray-matter';
-
 function formatDate(dateValue) {
   if (!dateValue) {
     return 'Unknown Date';
@@ -52,7 +48,7 @@ function normalizeTags(tags) {
 async function queryDatabase(queryText, values = []) {
   const connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL;
   if (!connectionString) {
-    return null;
+    throw new Error('POSTGRES_URL or DATABASE_URL is not configured.');
   }
 
   let Client;
@@ -60,8 +56,7 @@ async function queryDatabase(queryText, values = []) {
     const pgModuleName = 'pg';
     ({ Client } = await import(pgModuleName));
   } catch (error) {
-    console.error('Postgres driver is not installed. Falling back to markdown files.', error);
-    return null;
+    throw new Error(`Postgres driver is not installed: ${error?.message || error}`);
   }
 
   const client = new Client({
@@ -79,52 +74,21 @@ async function queryDatabase(queryText, values = []) {
   }
 }
 
-function getNewsDirectory() {
-  return path.join(process.cwd(), 'news');
-}
-
-function readMarkdownArticles() {
-  const newsDirectory = getNewsDirectory();
-  if (!fs.existsSync(newsDirectory)) {
-    return [];
-  }
-
-  const filenames = fs
-    .readdirSync(newsDirectory)
-    .filter((filename) => filename.endsWith('.md'));
-
-  return filenames.map((filename) => {
-    const filePath = path.join(newsDirectory, filename);
-    const fileContents = fs.readFileSync(filePath, 'utf8');
-    const { data, content } = matter(fileContents);
-
-    const date = data.date ? new Date(data.date).toISOString() : null;
-
-    return {
-      slug: filename.replace('.md', ''),
-      title: data.title || 'Untitled',
-      source: data.source || null,
-      link: data.link || null,
-      date,
-      formattedDate: formatDate(date),
-      content,
-      tags: normalizeTags(data.tags || []),
-    };
-  });
-}
-
 function normalizeDbArticle(row) {
   const date = row.published_at ? new Date(row.published_at).toISOString() : null;
 
   return {
     slug: row.slug,
     title: row.title || 'Untitled',
+    titleBg: row.title_bg || null,
     source: row.source || null,
     link: row.link || null,
     date,
     formattedDate: formatDate(date),
     content: row.content || '',
+    contentBg: row.content_bg || '',
     tags: normalizeTags(row.tags),
+    views: Number(row.view_count) || 0,
   };
 }
 
@@ -134,32 +98,38 @@ function isMissingArticlesTableError(error) {
 
 function logDatabaseFallback(context, error) {
   if (isMissingArticlesTableError(error)) {
-    console.warn(`[newsData] ${context}: таблицата articles липсва. Ползвам markdown fallback.`);
+    console.warn(`[newsData] ${context}: таблицата articles липсва.`);
     return;
   }
 
-  console.error(`[newsData] ${context}: fallback към markdown.`, error?.message || error);
+  console.error(`[newsData] ${context}: database read failed.`, error?.message || error);
+}
+
+async function ensureViewCountColumn() {
+  try {
+    await queryDatabase('ALTER TABLE articles ADD COLUMN IF NOT EXISTS view_count BIGINT NOT NULL DEFAULT 0;');
+  } catch (error) {
+    logDatabaseFallback('ensureViewCountColumn', error);
+  }
 }
 
 export async function getAllArticles() {
   try {
+    await ensureViewCountColumn();
     const rows = await queryDatabase(
       `
-        SELECT slug, title, source, link, published_at, tags, content
+        SELECT slug, title, title_bg, source, link, published_at, tags, content, content_bg, view_count
         FROM articles
         ORDER BY published_at DESC NULLS LAST
       `
     );
 
-    if (rows) {
-      return rows.map(normalizeDbArticle);
-    }
+    return (rows || []).map(normalizeDbArticle);
   } catch (error) {
     logDatabaseFallback('getAllArticles', error);
+    return [];
   }
 
-  const articles = readMarkdownArticles();
-  return articles.sort((a, b) => new Date(b.date) - new Date(a.date));
 }
 
 export async function getLatestArticles(limit = 3) {
@@ -177,21 +147,20 @@ export async function getArticleSlugs() {
       `
     );
 
-    if (rows) {
-      return rows.map((row) => row.slug);
-    }
+    return (rows || []).map((row) => row.slug);
   } catch (error) {
     logDatabaseFallback('getArticleSlugs', error);
+    return [];
   }
 
-  return readMarkdownArticles().map((article) => article.slug);
 }
 
 export async function getArticleBySlug(slug) {
   try {
+    await ensureViewCountColumn();
     const rows = await queryDatabase(
       `
-        SELECT slug, title, source, link, published_at, tags, content
+        SELECT slug, title, title_bg, source, link, published_at, tags, content, content_bg, view_count
         FROM articles
         WHERE slug = $1
         LIMIT 1
@@ -202,28 +171,58 @@ export async function getArticleBySlug(slug) {
     if (rows && rows.length > 0) {
       return normalizeDbArticle(rows[0]);
     }
+    return null;
   } catch (error) {
     logDatabaseFallback('getArticleBySlug', error);
-  }
-
-  const filePath = path.join(getNewsDirectory(), `${slug}.md`);
-  if (!fs.existsSync(filePath)) {
     return null;
   }
+}
 
-  const fileContent = fs.readFileSync(filePath, 'utf8');
-  const { data, content } = matter(fileContent);
-  const cleanedContent = content.replace(/[\r\uFEFF\xA0]+/g, '').trim();
-  const date = data.date ? new Date(data.date).toISOString() : null;
+export async function getArticleViewsBySlug(slug) {
+  try {
+    await ensureViewCountColumn();
+    const rows = await queryDatabase(
+      `
+        SELECT view_count
+        FROM articles
+        WHERE slug = $1
+        LIMIT 1
+      `,
+      [slug]
+    );
 
-  return {
-    slug,
-    title: data.title || 'Untitled',
-    source: data.source || null,
-    link: data.link || null,
-    date,
-    formattedDate: formatDate(date),
-    content: cleanedContent,
-    tags: normalizeTags(data.tags || []),
-  };
+    if (!rows || rows.length === 0) {
+      return null;
+    }
+
+    return Number(rows[0].view_count) || 0;
+  } catch (error) {
+    logDatabaseFallback('getArticleViewsBySlug', error);
+    return null;
+  }
+}
+
+export async function incrementArticleViewsBySlug(slug) {
+  try {
+    await ensureViewCountColumn();
+    const rows = await queryDatabase(
+      `
+        UPDATE articles
+        SET view_count = COALESCE(view_count, 0) + 1,
+            updated_at = NOW()
+        WHERE slug = $1
+        RETURNING view_count
+      `,
+      [slug]
+    );
+
+    if (!rows || rows.length === 0) {
+      return null;
+    }
+
+    return Number(rows[0].view_count) || 0;
+  } catch (error) {
+    logDatabaseFallback('incrementArticleViewsBySlug', error);
+    return null;
+  }
 }
