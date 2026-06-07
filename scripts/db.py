@@ -50,6 +50,19 @@ def article_exists(slug):
 
 
 def upsert_article(news, slug):
+    tags = news.tags if isinstance(news.tags, dict) else {}
+    return upsert_article_payload(
+        slug=slug,
+        title=news.title,
+        source=news.source,
+        published_at=news.published,
+        link=news.link,
+        tags=tags,
+        content=news.content,
+    )
+
+
+def upsert_article_payload(slug, title, source, published_at, link, tags, content):
     connection_string = _get_connection_string()
     if not connection_string:
         return False
@@ -72,12 +85,12 @@ def upsert_article(news, slug):
                 """,
                 (
                     slug,
-                    news.title,
-                    news.source,
-                    news.published,
-                    news.link,
-                    Json(news.tags if isinstance(news.tags, dict) else {}),
-                    news.content,
+                    title,
+                    source,
+                    published_at,
+                    link,
+                    Json(tags if isinstance(tags, dict) else {}),
+                    content,
                 ),
             )
     return True

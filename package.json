@@ -9,7 +9,9 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "ingest:db": "python scripts/main.py --storage-mode database --times 1",
+    "import:markdown-to-db": "python scripts/import_markdown_to_db.py"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",

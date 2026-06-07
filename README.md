@@ -1,7 +1,7 @@
 # AI Infocus
 
 AI Infocus is an automated AI news aggregation app.
-It collects articles from RSS feeds, enriches and tags them with AI, stores them as Markdown snapshots, and serves them through a Next.js frontend.
+It collects articles from RSS feeds, enriches and tags them with AI, stores them in Postgres (Neon/Vercel), and serves them through a Next.js frontend.
 
 ## Architecture (Best Practice for GitHub + Vercel)
 
@@ -12,20 +12,22 @@ It collects articles from RSS feeds, enriches and tags them with AI, stores them
     - Filter by AI relevance + recency.
     - Extract full content.
     - Refactor and classify with LLM.
-    - Persist as Markdown in `news/`.
+    - Persist to Postgres (`articles` table).
 
-### 2) Content Layer (Git-tracked snapshots)
-- Location: `news/`
-- Format: Markdown with frontmatter (`title`, `source`, `date`, `link`, `tags`).
+### 2) Content Layer (Postgres)
+- Storage: Neon/Vercel Postgres
+- Table: `articles`
 - Purpose:
-    - Versioned content history in Git.
-    - Deterministic deploys on Vercel.
-    - Easy rollback of bad ingestion runs.
+    - Central source of truth for news content.
+    - No noisy content commits for every ingestion run.
+    - Better scalability for filtering and querying.
+
+Markdown files under `news/` are optional fallback and can be imported into DB.
 
 ### 3) Delivery Layer (Next.js)
 - Location: `src/pages/`
 - Responsibilities:
-    - List and render news from Markdown.
+    - List and render news from DB.
     - Provide API endpoint (`/api/articles`) for latest cards.
     - Use response caching headers for faster repeated reads on Vercel CDN.
 
@@ -34,32 +36,19 @@ It collects articles from RSS feeds, enriches and tags them with AI, stores them
 - Responsibilities:
     - Scheduled runs (hourly).
     - Execute ingestion script.
-    - Commit only changed `news/` files.
-    - Push to GitHub to trigger Vercel deployment.
+    - Write directly to Postgres.
 
 ## Recommended Hosting Flow
-1. GitHub Actions updates `news/` on schedule.
-2. Push to default branch triggers Vercel build.
-3. Vercel serves updated app globally.
+1. GitHub Actions runs ingestion on schedule.
+2. Pipeline writes new content into Postgres.
+3. Vercel reads from Postgres at runtime.
 
-## Save vs Cache Strategy
+## Storage Modes
 
-### Option A (Current and recommended for your setup): Save snapshots in Git
-- Pros:
-    - Simple and reliable.
-    - Full content history.
-    - Easy to debug and compare changes.
-- Cons:
-    - Frequent commits create noise.
-    - Each push triggers a deployment.
-
-### Option B (Alternative): Cache outside Git
-- Store normalized news in Redis/KV/DB and render dynamically.
-- Keep short CDN cache (for example 10-15 min) with stale-while-revalidate.
-- Pros: fewer commits/deploys, near-real-time refresh.
-- Cons: higher architecture complexity, external infra.
-
-If you want a graduation path: start with Option A, then move to Option B when traffic and update frequency grow.
+`NEWS_STORAGE_MODE` controls where ingestion writes content:
+- `database` (default): DB only.
+- `file`: Markdown only.
+- `both`: DB + Markdown.
 
 ## Local Development
 
@@ -77,17 +66,24 @@ If you want a graduation path: start with Option A, then move to Option B when t
      - `pip install -r requirements.txt`
 4. Configure environment variables in `.env`:
     - `GEMINI_API_KEY=...`
+    - `POSTGRES_URL=...`
 5. Run ingestion manually:
-     - `python scripts/main.py`
+    - DB mode: `python scripts/main.py --storage-mode database --times 1`
+    - or `npm run ingest:db`
+6. Import existing markdown files into DB (optional):
+    - `python scripts/import_markdown_to_db.py`
+    - or `npm run import:markdown-to-db`
 6. Start frontend:
-     - `npm run dev`
+    - `npm run dev`
 
 ## GitHub Secrets Required
 - `GEMINI_API_KEY`
+- `POSTGRES_URL`
 
 ## Vercel Setup Checklist
 1. Import GitHub repository into Vercel.
 2. Set project framework to Next.js.
 3. Enable automatic deployments from your main branch.
 4. Add environment variables in Vercel only if runtime routes require them.
-5. Keep ingestion in GitHub Actions (not in Vercel build step).
+5. Add `POSTGRES_URL` in Vercel Project Environment Variables.
+6. Keep ingestion in GitHub Actions (not in Vercel build step).

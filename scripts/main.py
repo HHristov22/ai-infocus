@@ -1,3 +1,6 @@
+import argparse
+import os
+
 from fetcher import fetch_ai_news
 from utils import save_as_markdown, delete_old_markdown_files
 from db import init_db
@@ -24,4 +27,17 @@ def main(times=1):
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Run AI news ingestion pipeline.")
+    parser.add_argument("--times", type=int, default=1, help="How many ingestion iterations to run.")
+    parser.add_argument(
+        "--storage-mode",
+        choices=["database", "db", "file", "markdown", "both"],
+        default=None,
+        help="Override NEWS_STORAGE_MODE for this execution.",
+    )
+    args = parser.parse_args()
+
+    if args.storage_mode:
+        os.environ["NEWS_STORAGE_MODE"] = args.storage_mode
+
+    main(times=args.times)
