@@ -25,6 +25,26 @@ import Link from 'next/link';
 export default function NewsGrid({ articles, error }) {
   const router = useRouter();
 
+  const getTagLabel = (tag) => {
+    if (!tag || typeof tag !== 'object') {
+      return '';
+    }
+    if ('label' in tag) {
+      return tag.label;
+    }
+    return Object.keys(tag)[0] || '';
+  };
+
+  const getTagValue = (tag) => {
+    if (!tag || typeof tag !== 'object') {
+      return 0;
+    }
+    if ('value' in tag) {
+      return Number(tag.value) || 0;
+    }
+    return Number(Object.values(tag)[0]) || 0;
+  };
+
   // Import tags from news_tags.json
   const availableTags = allTags.filter(tag => tag !== 'Other');
   
@@ -45,7 +65,7 @@ export default function NewsGrid({ articles, error }) {
     }
 
     const filtered = articles.filter(article => {
-      const articleTags = article.tags.map(tag => Object.keys(tag)[0]);
+      const articleTags = (article.tags || []).map((tag) => getTagLabel(tag)).filter(Boolean);
       
       if (filterMode === 'any') {
         // At least one selected tag is present
@@ -96,6 +116,8 @@ export default function NewsGrid({ articles, error }) {
       </Typography>
     );
   }
+
+  const hasActiveFilters = selectedTags.length > 0;
 
   // Check if current route is /news
   const isNewsPage = router.pathname === '/news';
@@ -227,10 +249,10 @@ export default function NewsGrid({ articles, error }) {
                       {article.tags.map((tag, index) => (
                         <Chip
                           key={index}
-                          label={Object.keys(tag)[0]}
+                          label={getTagLabel(tag)}
                           sx={{
-                            backgroundColor: `rgba(28, 123, 196, ${Math.max(((Object.values(tag)[0] - 40) / 60), 0) + 0.15})`,
-                            color: `rgba(255, 255, 255, ${Math.max(((Object.values(tag)[0] - 20) / 30), 0) + 0.55})`,
+                            backgroundColor: `rgba(28, 123, 196, ${Math.max(((getTagValue(tag) - 40) / 60), 0) + 0.15})`,
+                            color: `rgba(255, 255, 255, ${Math.max(((getTagValue(tag) - 20) / 30), 0) + 0.55})`,
                             fontWeight: 'bold',
                           }}
                         />
@@ -264,7 +286,9 @@ export default function NewsGrid({ articles, error }) {
         ) : (
           <Grid item xs={12}>
             <Typography variant="body1" color="text.secondary" align="center">
-              No articles match the selected tags.
+              {hasActiveFilters
+                ? 'Няма резултати за избраните филтри. Опитай с по-малко тагове или изчисти филтрите.'
+                : 'В момента няма налични новини.'}
             </Typography>
           </Grid>
         )}

@@ -55,7 +55,15 @@ async function queryDatabase(queryText, values = []) {
     return null;
   }
 
-  const { Client } = await import('pg');
+  let Client;
+  try {
+    const pgModuleName = 'pg';
+    ({ Client } = await import(pgModuleName));
+  } catch (error) {
+    console.error('Postgres driver is not installed. Falling back to markdown files.', error);
+    return null;
+  }
+
   const client = new Client({
     connectionString,
     ssl: { rejectUnauthorized: false },
@@ -120,6 +128,19 @@ function normalizeDbArticle(row) {
   };
 }
 
+function isMissingArticlesTableError(error) {
+  return error && (error.code === '42P01' || String(error.message || '').includes('relation "articles" does not exist'));
+}
+
+function logDatabaseFallback(context, error) {
+  if (isMissingArticlesTableError(error)) {
+    console.warn(`[newsData] ${context}: таблицата articles липсва. Ползвам markdown fallback.`);
+    return;
+  }
+
+  console.error(`[newsData] ${context}: fallback към markdown.`, error?.message || error);
+}
+
 export async function getAllArticles() {
   try {
     const rows = await queryDatabase(
@@ -134,7 +155,7 @@ export async function getAllArticles() {
       return rows.map(normalizeDbArticle);
     }
   } catch (error) {
-    console.error('Failed to read articles from database, falling back to markdown.', error);
+    logDatabaseFallback('getAllArticles', error);
   }
 
   const articles = readMarkdownArticles();
@@ -160,7 +181,7 @@ export async function getArticleSlugs() {
       return rows.map((row) => row.slug);
     }
   } catch (error) {
-    console.error('Failed to read slugs from database, falling back to markdown.', error);
+    logDatabaseFallback('getArticleSlugs', error);
   }
 
   return readMarkdownArticles().map((article) => article.slug);
@@ -182,7 +203,7 @@ export async function getArticleBySlug(slug) {
       return normalizeDbArticle(rows[0]);
     }
   } catch (error) {
-    console.error('Failed to read article by slug from database, falling back to markdown.', error);
+    logDatabaseFallback('getArticleBySlug', error);
   }
 
   const filePath = path.join(getNewsDirectory(), `${slug}.md`);
