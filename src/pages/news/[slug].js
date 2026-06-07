@@ -15,7 +15,7 @@ export async function getStaticPaths() {
 
   return {
     paths,
-    fallback: false,
+    fallback: 'blocking',
   };
 }
 
@@ -24,6 +24,7 @@ export async function getStaticProps({ params }) {
   if (!article) {
     return {
       notFound: true,
+      revalidate: 60,
     };
   }
 
@@ -38,6 +39,7 @@ export async function getStaticProps({ params }) {
       tags: article.tags,
       initialViews: article.views || 0,
     },
+    revalidate: 60,
   };
 }
 
