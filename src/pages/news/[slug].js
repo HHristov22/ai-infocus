@@ -1,24 +1,14 @@
 import React from 'react';
 import { Container, Typography, Box } from '@mui/material';
 import Layout from '../../components/layout/Layout';
-import fs from 'fs';
-import path from 'path';
-import matter from 'gray-matter';
 import ReactMarkdown from 'react-markdown';
+import { getArticleBySlug, getArticleSlugs } from '../../lib/newsData';
 
 export async function getStaticPaths() {
-  const dirPath = path.join(process.cwd(), 'news');
-  if (!fs.existsSync(dirPath)) {
-    return {
-      paths: [],
-      fallback: false,
-    };
-  }
+  const slugs = await getArticleSlugs();
 
-  const filenames = fs.readdirSync(dirPath).filter((filename) => filename.endsWith('.md'));
-
-  const paths = filenames.map((filename) => ({
-    params: { slug: filename.replace('.md', '') },
+  const paths = slugs.map((slug) => ({
+    params: { slug },
   }));
 
   return {
@@ -28,42 +18,20 @@ export async function getStaticPaths() {
 }
 
 export async function getStaticProps({ params }) {
-  const filePath = path.join(process.cwd(), 'news', `${params.slug}.md`);
-
-  if (!fs.existsSync(filePath)) {
+  const article = await getArticleBySlug(params.slug);
+  if (!article) {
     return {
       notFound: true,
     };
   }
 
-  const fileContent = fs.readFileSync(filePath, 'utf8');
-  const { data, content } = matter(fileContent);
-
-  const cleanedContent = content.replace(/[\r\uFEFF\xA0]+/g, '').trim();
-
-  const date = data.date ? new Date(data.date).toISOString() : null;
-
-  const tags = data.tags || [];
-
   return {
     props: {
-      title: data.title || 'Untitled',
-      date: date,
-      formattedDate: date
-        ? new Date(date).toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            hourCycle: 'h23'
-          }).replace(' at ', ' - ')
-        : 'Unknown Date',
-      content: cleanedContent,
-      tags: tags.map((tag) => ({
-        label: Object.keys(tag)[0],
-        value: Object.values(tag)[0],
-      })),
+      title: article.title,
+      date: article.date,
+      formattedDate: article.formattedDate,
+      content: article.content,
+      tags: article.tags,
     },
   };
 }

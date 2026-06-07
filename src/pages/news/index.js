@@ -5,9 +5,7 @@ import {
 } from '@mui/material';
 import Layout from '../../components/layout/Layout';
 import NewsGrid from '../../components/home/NewsGrid';
-import fs from 'fs';
-import path from 'path';
-import matter from 'gray-matter';
+import { getAllArticles } from '../../lib/newsData';
 
 export default function NewsPage({ articles, darkMode, toggleDarkMode }) {
   const [filteredArticles] = useState(articles); // To store filtered articles
@@ -27,46 +25,7 @@ export default function NewsPage({ articles, darkMode, toggleDarkMode }) {
 }
 
 export async function getStaticProps() {
-  const newsDirectory = path.join(process.cwd(), 'news');
-
-  if (!fs.existsSync(newsDirectory)) {
-    return {
-      props: {
-        articles: [],
-      },
-    };
-  }
-
-  const filenames = fs.readdirSync(newsDirectory).filter((filename) => filename.endsWith('.md'));
-
-  const articles = filenames.map((filename) => {
-    const filePath = path.join(newsDirectory, filename);
-    const fileContents = fs.readFileSync(filePath, 'utf8');
-    const { data, content } = matter(fileContents);
-
-    const date = data.date ? new Date(data.date).toISOString() : null;
-
-    return {
-      slug: filename.replace('.md', ''),
-      ...data,
-      date,
-      content,
-      formattedDate: date
-        ? new Date(date)
-            .toLocaleString('en-US', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-              hourCycle: 'h23',
-            })
-            .replace(' at ', ' - ')
-        : 'Unknown Date',
-    };
-  });
-
-  const sortedArticles = articles.sort((a, b) => new Date(b.date) - new Date(a.date));
+  const sortedArticles = await getAllArticles();
 
   return {
     props: {
