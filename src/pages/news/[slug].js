@@ -8,7 +8,14 @@ import ReactMarkdown from 'react-markdown';
 
 export async function getStaticPaths() {
   const dirPath = path.join(process.cwd(), 'news');
-  const filenames = fs.readdirSync(dirPath);
+  if (!fs.existsSync(dirPath)) {
+    return {
+      paths: [],
+      fallback: false,
+    };
+  }
+
+  const filenames = fs.readdirSync(dirPath).filter((filename) => filename.endsWith('.md'));
 
   const paths = filenames.map((filename) => ({
     params: { slug: filename.replace('.md', '') },
@@ -22,6 +29,13 @@ export async function getStaticPaths() {
 
 export async function getStaticProps({ params }) {
   const filePath = path.join(process.cwd(), 'news', `${params.slug}.md`);
+
+  if (!fs.existsSync(filePath)) {
+    return {
+      notFound: true,
+    };
+  }
+
   const fileContent = fs.readFileSync(filePath, 'utf8');
   const { data, content } = matter(fileContent);
 

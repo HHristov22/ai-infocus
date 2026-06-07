@@ -28,7 +28,16 @@ export default function NewsPage({ articles, darkMode, toggleDarkMode }) {
 
 export async function getStaticProps() {
   const newsDirectory = path.join(process.cwd(), 'news');
-  const filenames = fs.readdirSync(newsDirectory);
+
+  if (!fs.existsSync(newsDirectory)) {
+    return {
+      props: {
+        articles: [],
+      },
+    };
+  }
+
+  const filenames = fs.readdirSync(newsDirectory).filter((filename) => filename.endsWith('.md'));
 
   const articles = filenames.map((filename) => {
     const filePath = path.join(newsDirectory, filename);

@@ -9,10 +9,10 @@ export default function handler(req, res) {
   const dirPath = path.join(process.cwd(), 'news');
   
   if (!fs.existsSync(dirPath)) {
-    return res.status(404).json({ error: 'News directory not found' });
+    return res.status(200).json([]);
   }
 
-  const filenames = fs.readdirSync(dirPath);
+  const filenames = fs.readdirSync(dirPath).filter((filename) => filename.endsWith('.md'));
 
   const articles = filenames.map((filename) => {
     const filePath = path.join(dirPath, filename);

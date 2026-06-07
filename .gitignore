@@ -29,6 +29,8 @@ builds/
 # Miscellaneous files
 .DS_Store
 *.pem
+github_sshkey
+github_sshkey.pub
 
 # Debug logs
 npm-debug.log*
