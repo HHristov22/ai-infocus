@@ -1,0 +1,15 @@
+{
+  "short_name": "AI-I",
+  "name": "AI Infocus",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "500x500",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "description": "Stay updated with the latest breakthroughs and trends in AI."
+}
