@@ -1,10 +1,78 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Container, Typography, Box } from '@mui/material';
+import { Container, Typography, Box, Button } from '@mui/material';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
+import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined';
 import Layout from '../../components/layout/Layout';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { getArticleBySlug, getArticleSlugs } from '../../lib/newsData';
 import { formatDisplayDate, getText } from '../../utils/i18n';
+
+function MarkdownCodeBlock({ language, code, codeProps }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch (error) {
+      // Ignore clipboard errors to avoid breaking rendering.
+    }
+  };
+
+  return (
+    <Box sx={{ my: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.6 }}>
+        <Typography
+          variant="caption"
+          sx={{
+            display: 'block',
+            fontWeight: 700,
+            letterSpacing: 0.3,
+            color: 'text.secondary',
+          }}
+        >
+          Code Block
+        </Typography>
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={handleCopy}
+          startIcon={copied ? <CheckCircleOutlineOutlinedIcon fontSize="small" /> : <ContentCopyOutlinedIcon fontSize="small" />}
+          sx={{
+            minWidth: 92,
+            textTransform: 'none',
+            borderColor: 'rgba(16, 110, 190, 0.35)',
+            color: '#106EBE',
+            '&:hover': {
+              borderColor: '#106EBE',
+              backgroundColor: 'rgba(16, 110, 190, 0.08)',
+            },
+          }}
+        >
+          {copied ? 'Copied' : 'Copy'}
+        </Button>
+      </Box>
+      <SyntaxHighlighter
+        language={language}
+        style={oneDark}
+        PreTag="div"
+        customStyle={{
+          borderRadius: '10px',
+          margin: 0,
+          padding: '14px 16px',
+        }}
+        {...codeProps}
+      >
+        {code}
+      </SyntaxHighlighter>
+    </Box>
+  );
+}
 
 export async function getStaticPaths() {
   const slugs = await getArticleSlugs();
@@ -123,7 +191,72 @@ export default function NewsPage({
           ))}
         </Box>
         <div style={{ textAlign: 'justify' }}>
-          <ReactMarkdown>{locale === 'bg' && contentBg ? contentBg : content}</ReactMarkdown>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              table: ({ ...props }) => (
+                <Box sx={{ overflowX: 'auto', my: 2 }}>
+                  <table
+                    style={{
+                      width: '100%',
+                      borderCollapse: 'collapse',
+                      minWidth: '560px',
+                    }}
+                    {...props}
+                  />
+                </Box>
+              ),
+              th: ({ ...props }) => (
+                <th
+                  style={{
+                    border: '1px solid rgba(130, 130, 130, 0.35)',
+                    padding: '10px 12px',
+                    textAlign: 'left',
+                    background: 'rgba(16, 110, 190, 0.12)',
+                  }}
+                  {...props}
+                />
+              ),
+              td: ({ ...props }) => (
+                <td
+                  style={{
+                    border: '1px solid rgba(130, 130, 130, 0.25)',
+                    padding: '9px 12px',
+                    verticalAlign: 'top',
+                  }}
+                  {...props}
+                />
+              ),
+              code({ inline, className, children, ...props }) {
+                const match = /language-(\w+)/.exec(className || '');
+                if (!inline) {
+                  return (
+                    <MarkdownCodeBlock
+                      language={match ? match[1] : 'text'}
+                      code={String(children).replace(/\n$/, '')}
+                      codeProps={props}
+                    />
+                  );
+                }
+
+                return (
+                  <code
+                    className={className}
+                    style={{
+                      background: 'rgba(16, 110, 190, 0.10)',
+                      padding: '0.12rem 0.35rem',
+                      borderRadius: '4px',
+                    }}
+                    {...props}
+                  >
+                    {children}
+                  </code>
+                );
+              },
+            }}
+          >
+            {locale === 'bg' && contentBg ? contentBg : content}
+          </ReactMarkdown>
         </div>
       </Container>
     </Layout>
