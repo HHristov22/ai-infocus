@@ -37,6 +37,7 @@ def get_valid_rss_feeds(file_path):
         is_valid, _ = validate_rss_feed(url)
         if is_valid:
             valid_feeds[source] = url
+            print(f"PASS RSS feed: {source} -> {url}")
         else:
             print(f"Skipping invalid RSS feed: {source} -> {url}")
 
@@ -70,7 +71,7 @@ def fetch_ai_news():
         'data science',
     }
 
-    min_score = 2
+    min_score = 1.5
     
     ai_news = []
     rss_feeds = get_valid_rss_feeds('./scripts/rss_feeds.json')
@@ -78,6 +79,7 @@ def fetch_ai_news():
     n_hours_ago = now - timedelta(hours=12)
 
     for source, url in rss_feeds.items():
+        extracted_for_source = 0
         _, feed = validate_rss_feed(url)
         for entry in feed.entries:
             published_time = None
@@ -110,7 +112,7 @@ def fetch_ai_news():
                 if has_ai_signal:
                     content= extract_article_content(entry.link)
                     if content:
-                        if len(content)>1500:
+                        if len(content)>750:
                             ai_news.append(News(
                                 title=entry.title,
                                 content=content,
@@ -118,4 +120,7 @@ def fetch_ai_news():
                                 source=source,
                                 published=published_time
                             ))
+                            extracted_for_source += 1
+
+        print(f"EXTRACTED {source}: {extracted_for_source} articles -> {url}")
     return ai_news
