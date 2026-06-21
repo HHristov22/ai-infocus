@@ -10,7 +10,8 @@ export default function Contact({ darkMode, toggleDarkMode, locale, toggleLocale
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const formData = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const formData = new FormData(formElement);
     const fromName = String(formData.get('name') || '').trim();
     const userEmail = String(formData.get('email') || '').trim();
     const message = String(formData.get('message') || '').trim();
@@ -43,7 +44,7 @@ export default function Contact({ darkMode, toggleDarkMode, locale, toggleLocale
       }
 
       alert(text.contact.success);
-      event.currentTarget.reset();
+      formElement.reset();
     } catch (err) {
       console.error('FAILED...', err);
       const details = err?.text || err?.message || '';
