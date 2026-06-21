@@ -1,38 +1,56 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Container, Typography, Box, TextField, Button, Paper } from '@mui/material';
 import Layout from '../../components/layout/Layout';
-import emailjs from "@emailjs/browser";
 import { getText } from '../../utils/i18n';
 
 export default function Contact({ darkMode, toggleDarkMode, locale, toggleLocale }) {
   const text = getText(locale);
+  const [isSending, setIsSending] = useState(false);
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
+    const formData = new FormData(event.currentTarget);
+    const fromName = String(formData.get('name') || '').trim();
+    const userEmail = String(formData.get('email') || '').trim();
+    const message = String(formData.get('message') || '').trim();
+
+    if (!fromName || !userEmail || !message) {
+      alert(text.contact.failure);
+      return;
+    }
+
     const templateParams = {
-      from_name: event.target.name.value,
-      user_email: event.target.email.value,
-      message: event.target.message.value,
+      from_name: fromName,
+      user_email: userEmail,
+      message,
     };
 
-    emailjs
-      .send(
-        "service_w7ohii5",
-        "template_p93tp4f",
-        templateParams,
-        "yRrTnmnow7ooMfiv_"
-      )
-      .then(
-        (response) => {
-          console.log("SUCCESS!", response.status, response.text);
-          alert(text.contact.success);
+    try {
+      setIsSending(true);
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        (err) => {
-          console.error("FAILED...", err);
-          alert(text.contact.failure);
-        }
-      );
+        body: JSON.stringify(templateParams),
+      });
+
+      if (!response.ok) {
+        const errorPayload = await response.json().catch(() => ({}));
+        const details = errorPayload?.error || `HTTP ${response.status}`;
+        throw new Error(details);
+      }
+
+      alert(text.contact.success);
+      event.currentTarget.reset();
+    } catch (err) {
+      console.error('FAILED...', err);
+      const details = err?.text || err?.message || '';
+      alert(details ? `${text.contact.failure} (${details})` : text.contact.failure);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -76,9 +94,10 @@ export default function Contact({ darkMode, toggleDarkMode, locale, toggleLocale
               type="submit"
               fullWidth
               variant="contained"
+              disabled={isSending}
               sx={{ mt: 3, mb: 2 }}
             >
-              {text.contact.submit}
+              {isSending ? text.contact.sending : text.contact.submit}
             </Button>
           </Box>
         </Paper>
