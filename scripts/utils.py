@@ -68,7 +68,11 @@ def persist_article(news):
         if attempt == 0:
             print("Retrying...")
         else:
-            print("Final attempt failed. Continuing with empty tags.")
+            print("Final attempt failed. Skipping article with empty tags.")
+
+    if not news.tags:
+        print(f"Skipped article without tags: {slug}")
+        return
 
     try:
         upsert_article(news, slug)
