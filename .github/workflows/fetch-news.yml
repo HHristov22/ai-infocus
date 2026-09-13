@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: "0 */2 * * *"
   workflow_dispatch:
+    inputs:
+      days:
+        description: "Number of days to look back (0 keeps the 12-hour window)"
+        required: false
+        default: "0"
+        type: string
 
 permissions:
   contents: read
@@ -37,4 +43,4 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
           NEWS_STORAGE_MODE: database
-        run: python scripts/main.py
+        run: python scripts/main.py --days "${{ inputs.days || '0' }}"

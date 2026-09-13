@@ -44,7 +44,7 @@ def get_valid_rss_feeds(file_path):
     return valid_feeds
  
 
-def fetch_ai_news():
+def fetch_ai_news(days=0):
     """
     Retrieves news from RSS feeds related to AI.
     """
@@ -76,7 +76,8 @@ def fetch_ai_news():
     ai_news = []
     rss_feeds = get_valid_rss_feeds('./scripts/rss_feeds.json')
     now = datetime.now()
-    n_hours_ago = now - timedelta(hours=12)
+    lookback = timedelta(days=days) if days > 0 else timedelta(hours=12)
+    n_hours_ago = now - lookback
 
     for source, url in rss_feeds.items():
         extracted_for_source = 0
