@@ -193,6 +193,7 @@ export function formatDisplayDate(dateValue, locale = 'en') {
       hour: '2-digit',
       minute: '2-digit',
       hourCycle: 'h23',
+      timeZone: 'Europe/Sofia',
     })
     .replace(' at ', ' - ');
 }
