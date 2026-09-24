@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Container, 
   Typography
@@ -9,8 +9,27 @@ import { getAllArticles } from '../../lib/newsData';
 import { getText } from '../../utils/i18n';
 
 export default function NewsPage({ articles, darkMode, toggleDarkMode, locale, toggleLocale }) {
-  const [filteredArticles] = useState(articles); // To store filtered articles
+  const [filteredArticles, setFilteredArticles] = useState(articles); // To store filtered articles
   const text = getText(locale);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch('/api/news')
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (!cancelled && Array.isArray(data)) {
+          setFilteredArticles(data);
+        }
+      })
+      .catch(() => {
+        // Keep the ISR-cached articles if the refresh fetch fails.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <Layout darkMode={darkMode} toggleDarkMode={toggleDarkMode} locale={locale} toggleLocale={toggleLocale}>
@@ -33,6 +52,7 @@ export async function getStaticProps() {
     props: {
       articles: sortedArticles,
     },
-    revalidate: 60,
+    // On-demand revalidation handles instant updates; this is just a safety net.
+    revalidate: 3600,
   };
 }

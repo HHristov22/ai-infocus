@@ -23,7 +23,8 @@ import {
   Close as CloseIcon,
   ArrowUpward,
   ArrowDownward,
-  AutoAwesome
+  AutoAwesome,
+  VisibilityOutlined
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { formatDisplayDate, getText } from '../../utils/i18n';
@@ -302,7 +303,7 @@ export default function NewsGrid({ articles, error, locale }) {
             <Grid item xs={12} sm={6} md={4} key={article.slug}>
               <Card
                 sx={{
-                  height: '370px',
+                  height: '395px',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
@@ -331,6 +332,10 @@ export default function NewsGrid({ articles, error, locale }) {
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     {formatDisplayDate(article.date, locale)}
                   </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8, mb: 1, color: 'text.secondary' }}>
+                    <VisibilityOutlined sx={{ fontSize: 18 }} />
+                    <Typography variant="body2">{article.views || 0} {text.news.views}</Typography>
+                  </Box>
                   {/* Tags section */}
                   {article.tags && article.tags.length > 0 && (
                     <Box
@@ -343,7 +348,9 @@ export default function NewsGrid({ articles, error, locale }) {
                         borderRadius: 'px',
                       }}
                     >
-                      {article.tags.map((tag, index) => (
+                      {[...article.tags]
+                        .sort((a, b) => getTagValue(b) - getTagValue(a))
+                        .map((tag, index) => (
                         <Chip
                           key={index}
                           label={getTagLabel(tag)}

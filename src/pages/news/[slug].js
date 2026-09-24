@@ -92,7 +92,8 @@ export async function getStaticProps({ params }) {
   if (!article) {
     return {
       notFound: true,
-      revalidate: 60,
+      // On-demand revalidation handles instant updates; this is just a safety net.
+      revalidate: 3600,
     };
   }
 
@@ -107,18 +108,18 @@ export async function getStaticProps({ params }) {
       tags: article.tags,
       initialViews: article.views || 0,
     },
-    revalidate: 60,
+    revalidate: 3600,
   };
 }
 
 export default function NewsPage({
   slug,
-  title,
-  titleBg,
-  date,
-  content,
-  contentBg,
-  tags,
+  title: initialTitle,
+  titleBg: initialTitleBg,
+  date: initialDate,
+  content: initialContent,
+  contentBg: initialContentBg,
+  tags: initialTags,
   initialViews,
   darkMode,
   toggleDarkMode,
@@ -127,7 +128,43 @@ export default function NewsPage({
 }) {
   const text = getText(locale);
   const [views, setViews] = useState(Number(initialViews) || 0);
+  const [title, setTitle] = useState(initialTitle);
+  const [titleBg, setTitleBg] = useState(initialTitleBg);
+  const [date, setDate] = useState(initialDate);
+  const [content, setContent] = useState(initialContent);
+  const [contentBg, setContentBg] = useState(initialContentBg);
+  const [tags, setTags] = useState(initialTags);
   const hasTrackedView = useRef(false);
+
+  useEffect(() => {
+    if (!slug) {
+      return;
+    }
+
+    let cancelled = false;
+
+    fetch(`/api/articles/${encodeURIComponent(slug)}`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((article) => {
+        if (cancelled || !article) {
+          return;
+        }
+
+        setTitle(article.title);
+        setTitleBg(article.titleBg);
+        setDate(article.date);
+        setContent(article.content);
+        setContentBg(article.contentBg);
+        setTags(article.tags);
+      })
+      .catch(() => {
+        // Keep the ISR-cached article if the refresh fetch fails.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
 
   useEffect(() => {
     if (!slug || hasTrackedView.current) {
@@ -173,7 +210,7 @@ export default function NewsPage({
           <Typography variant="body2">{views} {text.news.views}</Typography>
         </Box>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 3 }}>
-          {tags.map((tag, index) => (
+          {[...tags].sort((a, b) => (b.value || 0) - (a.value || 0)).map((tag, index) => (
             <Box
             key={index}
             sx={{
